@@ -1,0 +1,558 @@
+import 'dart:io';
+import 'package:hospitalmanagementsystem/models/patient.dart';
+import 'package:fhir_at_rest/r4.dart';
+import 'package:http/http.dart' as http;
+//ignore_for_file: always_specify_types
+import 'package:fhir/r4.dart';
+import 'package:yaml/yaml.dart';
+import 'dart:convert';
+
+class RemoteService {
+  Future<Object> pushPatient() async {
+    var client = http.Client();
+    var uri = Uri.parse("https://fhir.simplifier.net/Course");
+    final response = http.get(uri, headers: {
+      HttpHeaders.contentTypeHeader: "application/json",
+      HttpHeaders.authorizationHeader:
+          "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoibWFyd2Fua2hhbGVkbW9zdGFmYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWVpZGVudGlmaWVyIjoiMTgzMWY1NDgtMjg4MC00ZjlmLTk2ZWQtZTk5MmUzODQ4ZGU5IiwianRpIjoiZDI2MzU3NzUtOTQwNS00OTQ5LWJmOTYtYTUzYjIyYzk0MTEzIiwiZXhwIjoxNjU2ODQzMTI4LCJpc3MiOiJhcGkuc2ltcGxpZmllci5uZXQiLCJhdWQiOiJhcGkuc2ltcGxpZmllci5uZXQifQ.eGdql6Te7yl61jiR0iK4l_0yXaoc3mceMvj3WmvaJ0g"
+    });
+
+    final Patient _patient = Patient();
+    return client;
+  }
+}
+
+Future<void> addPatient() async {
+  final Patient patient = Patient(
+    id: Id(123),
+    resourceType: R4ResourceType.Patient,
+    name: <HumanName>[
+      HumanName(use: HumanNameUse.official, text: "marwan", family: "khaled"),
+    ],
+    birthDate: Date(DateTime(2022, 01, 05)),
+    telecom: <ContactPoint>[
+      ContactPoint(
+          value: "1010304619",
+          use: ContactPointUse.mobile,
+          system: ContactPointSystem.phone),
+      ContactPoint(system: ContactPointSystem.email, value: "mirocc4@gmail.com")
+    ],
+    address: <Address>[Address(city: "Giza")],
+  );
+  print(patient.toYaml());
+  var doc = loadYaml(patient.toYaml());
+  var x = json.encode(doc);
+
+  var client = http.Client();
+  var uri = Uri.parse("https://test.fhir.org/r4/Patient");
+  final response = await http.get(
+    uri,
+  );
+
+  final re = await client.post(uri, body: x);
+  final request = FhirRequest.create(
+      base: Uri.parse('https://test.fhir.org/r4/Patient'),
+      resource: patient,
+      client: client);
+  print(
+      "******************************************************************************");
+  print(re);
+}
+
+
+// ignore_for_file: camel_case_types
+import 'constants.dart';
+
+class DataBaseAppointment {
+  final int patientID;
+  final int id;
+  final String date;
+  final int attendance;
+
+  DataBaseAppointment(
+      {required int this.attendance,
+      required String this.date,
+      required int this.id,
+      required int this.patientID});
+
+  DataBaseAppointment.fromRow(Map<String, Object?> map)
+      : patientID = map[appointmentPatientIDColumn] as int,
+        id = map[appointmentIDColumn] as int,
+        date = map[appointmentDateColumn] as String,
+        attendance = map[appointmentAttendanceColumn] as int;
+  // isSyncedWithCloud =
+  //     (map[isSyncedWithCloudColumn] as int) == 1 ? true : false;
+
+  @override
+  String toString() =>
+      "Note, patientID= $patientID, id =$id, date = $date, attendance = $attendance";
+
+  @override
+  bool operator ==(covariant DataBaseAppointment other) => id == other.id;
+
+  @override
+  // TODO: implement hashCode
+  int get hashCode => id.hashCode;
+}
+
+
+import 'constants.dart';
+
+class DataBaseUser {
+  final int id;
+  final String email;
+  final String name;
+  final int age;
+  final String gender;
+  final int phoneNumber;
+  final String address;
+  final String? bloodType;
+  final int? weight;
+  final int? height;
+  final String dateOfBirth;
+  final String? healthHistory;
+
+  const DataBaseUser({
+    required this.bloodType,
+    required this.weight,
+    required this.height,
+    required this.healthHistory,
+    required this.name,
+    required this.age,
+    required this.gender,
+    required this.phoneNumber,
+    required this.address,
+    required this.dateOfBirth,
+    required this.id,
+    required this.email,
+  });
+
+  DataBaseUser.fromRow(Map<String, Object?> map)
+      : id = map[idColumn] as int,
+        email = map[emailColumn] as String,
+        name = map[nameColumn] as String,
+        age = map[ageColumn] as int,
+        gender = map[genderColumn] as String,
+        phoneNumber = map[phoneNumberColumn] as int,
+        address = map[addressColumn] as String,
+        dateOfBirth = map[dateOfBirthColumn] as String,
+        bloodType = map[bloodTypeColumn] as String,
+        weight = map[weightColumn] as int,
+        height = map[heightColumn] as int,
+        healthHistory = map[healthHistoryColumn] as String;
+
+  String toString() => 'Person, ID = ${id} email = $email';
+
+  @override
+  bool operator ==(covariant DataBaseUser other) => id == other.id;
+
+  @override
+  // TODO: implement hashCode
+  int get hashCode => id.hashCode;
+}
+
+class DatabaseAlreadyOpenException implements Exception {}
+
+class unableToGetDocumentDirectoryException implements Exception {}
+
+class databaseIsNotOpenException implements Exception {}
+
+class couldNotDeletePatientException implements Exception {}
+
+class userAlreadyExists implements Exception {}
+
+class CouldNotFindUser implements Exception {}
+
+class CouldNotDeleteAppointment implements Exception {}
+
+class CouldNotFindAppointment implements Exception {}
+
+class CouldNotUpdatePatient implements Exception {}
+import 'constants.dart';
+
+class DataBasePrescription {
+  final int patientID;
+  final int id;
+  final String medicineDetail;
+  final String doctorName;
+  final String date;
+
+  DataBasePrescription(
+      {required String this.doctorName,
+      required String this.medicineDetail,
+      required int this.id,
+      required int this.patientID,
+      required String this.date});
+
+  DataBasePrescription.fromRow(Map<String, Object?> map)
+      : patientID = map[prescriptionPatientIDColumn] as int,
+        id = map[prescriptionIDColumn] as int,
+        medicineDetail = map[prescriptionMedicineDetail] as String,
+        doctorName = map[prescriptionDoctorNameColumn] as String,
+        date = map[prescriptionDateColumn] as String;
+
+  @override
+  String toString() =>
+      "Note, patientID= $patientID, id =$id, medicineDetail = $medicineDetail, doctorName = $doctorName, date = $date ";
+
+  @override
+  bool operator ==(covariant DataBasePrescription other) => id == other.id;
+
+  @override
+  // TODO: implement hashCode
+  int get hashCode => id.hashCode;
+}
+// ignore_for_file: camel_case_types
+
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:hospitalmanagementsystem/Services/curd/diagnosis_service.dart';
+import 'package:hospitalmanagementsystem/Services/curd/prescription_service.dart';
+import "package:sqflite/sqflite.dart";
+import "package:path_provider/path_provider.dart";
+import 'package:path/path.dart' show join;
+
+import 'appointment_service.dart';
+import 'constants.dart';
+import 'database_user.dart';
+import 'exeptions.dart';
+
+class PatientService {
+  Database? _db;
+
+  List<DataBaseDiagnosis> _diagnosis = [];
+
+  static final PatientService _shared = PatientService._sharedInstance();
+
+  PatientService._sharedInstance() {
+    _diagnosisStreamController =
+        StreamController<List<DataBaseDiagnosis>>.broadcast(onListen: () {
+      _diagnosisStreamController.sink.add(_diagnosis);
+    });
+  }
+  factory PatientService() => _shared;
+
+  late final StreamController<List<DataBaseDiagnosis>>
+      _diagnosisStreamController;
+
+  Stream<List<DataBaseDiagnosis>> get allDiagnosis =>
+      _diagnosisStreamController.stream;
+
+  Future<DataBaseUser> getOrCreateUser({required String email}) async {
+    try {
+      final patient = await getUser(email: email);
+      return patient;
+    } on CouldNotFindUser {
+      rethrow;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> _cacheDiagnosis() async {
+    final allDiagnosis = await getAllDiagnosis();
+    _diagnosis = allDiagnosis.toList();
+    _diagnosisStreamController.add(_diagnosis);
+  }
+
+  Future<DataBasePrescription> createPrescription(DataBaseUser Patient,
+      {required int PrescriptionId,
+      required String MedicineDetail,
+      required String DoctorName,
+      required String Date}) async {
+    await _ensureDbIsOpen();
+    final db = _getDatabaseOrThrow();
+    final dbPatient = await getUser(email: Patient.email);
+    if (dbPatient != Patient) {
+      throw CouldNotFindUser();
+    }
+
+    final diagnosisID = await db.insert(prescriptionTable, {
+      prescriptionIDColumn: PrescriptionId,
+      prescriptionPatientIDColumn: Patient.id,
+      prescriptionMedicineDetail: MedicineDetail,
+      prescriptionDoctorNameColumn: DoctorName,
+      prescriptionDateColumn: Date
+    });
+    final prescription = DataBasePrescription(
+        doctorName: DoctorName,
+        patientID: Patient.id,
+        id: PrescriptionId,
+        date: Date,
+        medicineDetail: MedicineDetail);
+
+    return prescription;
+  }
+
+  Future<DataBaseDiagnosis> createDiagnosis(DataBaseUser Patient,
+      {required int DiagnosisId,
+      required String Detail,
+      required String DoctorName,
+      required String Date}) async {
+    await _ensureDbIsOpen();
+    final db = _getDatabaseOrThrow();
+    final dbPatient = await getUser(email: Patient.email);
+    if (dbPatient != Patient) {
+      throw CouldNotFindUser();
+    }
+
+    final diagnosisID = await db.insert(diagnosisTable, {
+      diagnosisIDColumn: DiagnosisId,
+      diagnosisPatientIDColumn: Patient.id,
+      diagnosisDetailColumn: Detail,
+      diagnosisDoctorNameColumn: DoctorName,
+      diagnosisDateColumn: Date
+    });
+    final diagnosis = DataBaseDiagnosis(
+        doctorName: DoctorName,
+        patientID: Patient.id,
+        id: DiagnosisId,
+        date: Date,
+        diagnosisDetail: Detail);
+
+    _diagnosis.add(diagnosis);
+    _diagnosisStreamController.add(_diagnosis);
+
+    return diagnosis;
+  }
+
+  Future<DataBaseUser> updateUser(
+      {required String patientEmail,
+      required String patientName,
+      required int patientAge,
+      required String patientGender,
+      required int patientPhoneNumber,
+      required String patientAddress,
+      String? patientBloodType,
+      int? patientWeight,
+      int? patientHeight,
+      required String patientDateOfBirth,
+      String? patientHealthHistory}) async {
+    await _ensureDbIsOpen();
+    final db = _getDatabaseOrThrow();
+
+    final updateCount = await db.update(patientTable, {
+      emailColumn: patientEmail.toLowerCase(),
+      nameColumn: patientName.toLowerCase(),
+      ageColumn: patientAge,
+      genderColumn: patientGender.toLowerCase(),
+      phoneNumberColumn: patientPhoneNumber,
+      addressColumn: patientAddress.toLowerCase(),
+      bloodTypeColumn: patientBloodType?.toLowerCase(),
+      weightColumn: patientWeight,
+      heightColumn: patientHeight,
+      dateOfBirthColumn: patientDateOfBirth,
+      healthHistoryColumn: patientHealthHistory?.toLowerCase()
+    });
+
+    if (updateCount == 0) {
+      throw CouldNotUpdatePatient();
+    } else {
+      return await getUser(email: patientEmail);
+    }
+  }
+
+  Future<DataBasePrescription> getLatestPrescription() async {
+    await _ensureDbIsOpen();
+    final db = _getDatabaseOrThrow();
+
+    final latestPrescription =
+        await db.query(prescriptionTable, orderBy: prescriptionDateColumn);
+
+    return DataBasePrescription.fromRow(latestPrescription.last);
+  }
+
+  Future<Iterable<DataBaseDiagnosis>> getAllDiagnosis() async {
+    await _ensureDbIsOpen();
+    final db = _getDatabaseOrThrow();
+    final diagnosis =
+        await db.query(diagnosisTable, orderBy: diagnosisDateColumn);
+
+    return diagnosis
+        .map((diagnosisRow) => DataBaseDiagnosis.fromRow(diagnosisRow));
+  }
+
+  Future<DataBaseAppointment> getAppointment({required int id}) async {
+    await _ensureDbIsOpen();
+    final db = _getDatabaseOrThrow();
+    final appointments = await db
+        .query(appointmentTable, limit: 1, where: 'id = ?', whereArgs: [id]);
+
+    if (appointments.isEmpty) {
+      throw CouldNotFindAppointment();
+    } else {
+      return DataBaseAppointment.fromRow(appointments.first);
+    }
+  }
+
+  Future<void> deleteAppointment({required int id}) async {
+    await _ensureDbIsOpen();
+    final db = _getDatabaseOrThrow();
+    final deletedCount = await db.delete(
+      appointmentTable,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (deletedCount == 0) {
+      throw CouldNotDeleteAppointment();
+    }
+  }
+
+  Future<DataBaseAppointment> createAppointment(DataBaseUser patient,
+      {required String Date}) async {
+    await _ensureDbIsOpen();
+    final db = _getDatabaseOrThrow();
+    final dbPatient = await getUser(email: patient.email);
+    if (dbPatient != patient) {
+      throw CouldNotFindUser();
+    }
+
+    final appointmentID = await db.insert(appointmentTable, {
+      appointmentPatientIDColumn: patient.id,
+      appointmentDateColumn: Date,
+      appointmentAttendanceColumn: 0
+    });
+    final appointment = DataBaseAppointment(
+        patientID: patient.id, id: appointmentID, date: Date, attendance: 0);
+
+    return appointment;
+  }
+
+  Future<DataBaseUser> getUser({required String email}) async {
+    await _ensureDbIsOpen();
+    final db = _getDatabaseOrThrow();
+
+    final results = await db.query(
+      patientTable,
+      limit: 1,
+      where: 'email = ?',
+      whereArgs: [email.toLowerCase()],
+    );
+
+    if (results.isEmpty) {
+      throw CouldNotFindUser();
+    } else {
+      return DataBaseUser.fromRow(results.first);
+    }
+  }
+
+  Future<DataBaseUser> createPatient(
+      {required String patientEmail,
+      required String patientName,
+      required int patientAge,
+      required String patientGender,
+      required int patientPhoneNumber,
+      required String patientAddress,
+      String? patientBloodType,
+      int? patientWeight,
+      int? patientHeight,
+      required String patientDateOfBirth,
+      String? patientHealthHistory}) async {
+    await _ensureDbIsOpen();
+    final db = _getDatabaseOrThrow();
+    final results = await db.query(
+      patientTable,
+      limit: 1,
+      where: 'email = ?',
+      whereArgs: [patientEmail.toLowerCase()],
+    );
+    if (results.isNotEmpty) {
+      throw userAlreadyExists();
+    }
+
+    final patientID = await db.insert(patientTable, {
+      emailColumn: patientEmail.toLowerCase(),
+      nameColumn: patientName.toLowerCase(),
+      ageColumn: patientAge,
+      genderColumn: patientGender.toLowerCase(),
+      phoneNumberColumn: patientPhoneNumber,
+      addressColumn: patientAddress.toLowerCase(),
+      bloodTypeColumn: patientBloodType?.toLowerCase(),
+      weightColumn: patientWeight,
+      heightColumn: patientHeight,
+      dateOfBirthColumn: patientDateOfBirth,
+      healthHistoryColumn: patientHealthHistory?.toLowerCase()
+    });
+
+    return DataBaseUser(
+        bloodType: patientBloodType,
+        weight: patientWeight,
+        height: patientHeight,
+        healthHistory: patientHealthHistory,
+        name: patientName,
+        age: patientAge,
+        gender: patientGender,
+        phoneNumber: patientPhoneNumber,
+        address: patientAddress,
+        dateOfBirth: patientDateOfBirth,
+        id: patientID,
+        email: patientEmail);
+  }
+
+  Future<void> deletePatient({required String email}) async {
+    await _ensureDbIsOpen();
+    final db = _getDatabaseOrThrow();
+    final deletedCount = await db.delete(
+      patientTable,
+      where: 'email = ?',
+      whereArgs: [email.toLowerCase()],
+    );
+
+    if (deletedCount != 1) {
+      throw couldNotDeletePatientException();
+    }
+  }
+
+  Database _getDatabaseOrThrow() {
+    final db = _db;
+    if (db == null) {
+      throw databaseIsNotOpenException();
+    } else {
+      return db;
+    }
+  }
+
+  Future<void> close() async {
+    final db = _db;
+
+    if (db == null) {
+      throw databaseIsNotOpenException();
+    } else {
+      await db.close();
+    }
+  }
+
+  Future<void> _ensureDbIsOpen() async {
+    try {
+      await open();
+    } on DatabaseAlreadyOpenException {
+      print("nothing");
+    }
+  }
+
+  Future<void> open() async {
+    if (_db != null) {
+      throw DatabaseAlreadyOpenException();
+    }
+    try {
+      final docsPath = await getApplicationDocumentsDirectory();
+      final dPath = join(docsPath.path, dbName);
+      final db = await openDatabase(dPath);
+      _db = db;
+
+      await db.execute(createPatientTable);
+
+      await db.execute(createAppointmentTable);
+
+      await db.execute(createDiagnosisTable);
+
+      await db.execute(createPrescriptionTable);
+
+      await _cacheDiagnosis();
+    } on MissingPlatformDirectoryException {
+      throw unableToGetDocumentDirectoryException();
+    }
+  }
+}
