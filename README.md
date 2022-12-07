@@ -1,3 +1,4 @@
 # BMD303-content
-This includes HTML&CSS&SQL 
+Hospital management system
+This project includes HTML&CSS&SQL 
 There are no packages to download
